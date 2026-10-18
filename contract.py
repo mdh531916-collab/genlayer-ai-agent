@@ -11,7 +11,7 @@ class AIAgentEvaluator(gl.Contract):
     submissions: dict
 
     def __init__(self):
-        self.owner = gl.message.sender
+        self.owner = str(gl.message.sender)
         self.submissions = {}
 
     @gl.public
@@ -27,18 +27,20 @@ class AIAgentEvaluator(gl.Contract):
         # 2. Prevent duplicate task IDs
         assert task_id not in self.submissions, "Task ID already exists"
 
-        # 3. GenLayer Nondeterministic AI Execution
-        def evaluate_task() -> str:
+        # 3. Dedicated helper function for GenLayer Nondeterministic AI Execution
+        def _execute_ai_evaluation() -> str:
             result = gl.nondet.exec_prompt(prompt)
-            assert len(str(result).strip()) > 0, "AI evaluation output was empty"
-            return str(result)
+            assert result is not None, "AI execution returned None"
+            res_str = str(result).strip()
+            assert len(res_str) > 0, "AI evaluation output was empty"
+            return res_str
 
-        # 4. Validator consensus (Validator Agreement)
-        evaluation_result = gl.eq_principle.strict_eq(evaluate_task)
+        # 4. Validator consensus (Strict Equivalence Principle)
+        evaluation_result = gl.eq_principle.strict_eq(_execute_ai_evaluation)
 
-        # 5. Save state with detailed structure
+        # 5. Save state with detailed structure (converting sender to string)
         self.submissions[task_id] = {
-            "creator": gl.message.sender,
+            "creator": str(gl.message.sender),
             "prompt": prompt,
             "evaluation": evaluation_result,
             "status": "Evaluated"
